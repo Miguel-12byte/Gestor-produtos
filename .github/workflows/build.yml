@@ -1,0 +1,46 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Capacitor
+        run: npm install @capacitor/core @capacitor/cli
+
+      - name: Init Capacitor
+        run: npx cap init "Gestor de Produtos" "com.gestor.produtos" --web-dir=.
+
+      - name: Add Android
+        run: npx cap add android
+
+      - name: Copy files
+        run: npx cap copy
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
