@@ -1,0 +1,8 @@
+{
+  "name": "Gestor de Produtos",
+  "short_name": "Gestor",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb"
+}
