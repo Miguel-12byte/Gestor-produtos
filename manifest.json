@@ -1,8 +1,108 @@
-{
-  "name": "Gestor de Produtos",
-  "short_name": "Gestor",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#2563eb"
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestor de Produtos</title>
+
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#0f172a;
+  color:#fff;
 }
+
+header{
+  padding:15px;
+  background:#2563eb;
+  font-weight:bold;
+}
+
+.container{
+  padding:15px;
+}
+
+input, button{
+  width:100%;
+  padding:12px;
+  margin:5px 0;
+  border:none;
+  border-radius:8px;
+  font-size:14px;
+}
+
+input{
+  background:#111827;
+  color:#fff;
+}
+
+button{
+  background:#2563eb;
+  color:#fff;
+}
+
+.card{
+  background:#111827;
+  padding:10px;
+  border-radius:8px;
+  margin-top:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>Gestor de Produtos</header>
+
+<div class="container">
+
+<h3>Cadastrar Produto</h3>
+
+<input id="name" placeholder="Nome do produto">
+<input id="price" type="number" placeholder="Preço">
+
+<button onclick="addProduct()">Salvar</button>
+
+<h3>Lista</h3>
+<div id="list"></div>
+
+</div>
+
+<script>
+let products = JSON.parse(localStorage.getItem('produtos') || '[]')
+
+function addProduct(){
+  const name = document.getElementById('name').value
+  const price = document.getElementById('price').value
+
+  if(!name){
+    alert('Digite o nome')
+    return
+  }
+
+  products.push({name, price})
+  localStorage.setItem('produtos', JSON.stringify(products))
+
+  render()
+}
+
+function render(){
+  const list = document.getElementById('list')
+  list.innerHTML = ''
+
+  products.forEach(p=>{
+    list.innerHTML += `
+      <div class="card">
+        <b>${p.name}</b><br>
+        R$ ${p.price || 0}
+      </div>
+    `
+  })
+}
+
+render()
+</script>
+
+</body>
+</html>
