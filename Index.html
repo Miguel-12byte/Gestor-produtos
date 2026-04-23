@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestor de Produtos</title>
+
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#0f172a;
+  color:#fff;
+}
+header{
+  padding:15px;
+  background:#2563eb;
+  font-weight:bold;
+}
+.container{
+  padding:15px;
+}
+input, button{
+  width:100%;
+  padding:12px;
+  margin:5px 0;
+  border:none;
+  border-radius:8px;
+}
+input{ background:#111827; color:#fff; }
+button{ background:#2563eb; color:#fff; }
+.card{
+  background:#111827;
+  padding:10px;
+  border-radius:8px;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>Gestor de Produtos</header>
+
+<div class="container">
+
+<input id="name" placeholder="Produto">
+<input id="price" type="number" placeholder="Preço">
+
+<button onclick="add()">Salvar</button>
+
+<div id="list"></div>
+
+</div>
+
+<script>
+let produtos = JSON.parse(localStorage.getItem('produtos')||'[]')
+
+function add(){
+  let n = name.value
+  let p = price.value
+  if(!n) return alert('Digite o nome')
+  produtos.push({n,p})
+  localStorage.setItem('produtos',JSON.stringify(produtos))
+  render()
+}
+
+function render(){
+  list.innerHTML=''
+  produtos.forEach(x=>{
+    list.innerHTML += `<div class="card">${x.n} - R$ ${x.p||0}</div>`
+  })
+}
+
+render()
+</script>
+
+</body>
+</html>
