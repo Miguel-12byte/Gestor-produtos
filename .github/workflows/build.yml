@@ -14,58 +14,55 @@ jobs:
 
     steps:
       # 📥 Clonar repositório
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 🟢 Node.js 24
-      - name: Setup Node.js
+      # 🟢 Node 24
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      # ☕ Java 17 (necessário para Android)
+      # ☕ Java 17 (Android precisa disso)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # 📦 Instalar dependências (sem quebrar se não tiver lock file)
+      # 📦 Instalar dependências (sem quebrar)
       - name: Install dependencies
-        run: |
-          if [ -f package.json ]; then
-            npm install --no-audit --no-fund || true
-          else
-            echo "Sem package.json, pulando install"
-          fi
+        run: npm install || true
 
-      # 🌐 Garantir estrutura web
-      - name: Prepare web app
+      # 🌐 Garantir pasta web
+      - name: Ensure www exists
         run: |
           mkdir -p www
           if [ ! -f www/index.html ]; then
-            echo "<!doctype html><html><body><h1>Gestor funcionando</h1></body></html>" > www/index.html
+            echo "<!doctype html><html><body><h1>Gestor OK</h1></body></html>" > www/index.html
           fi
 
-- name: Init Capacitor
-  run: |
-    npx cap init gestor com.miguel.gestorprodutos --web-dir=www || true
+      # ⚙️ Instalar Capacitor
+      - name: Install Capacitor
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
       # 📱 Adicionar Android
-      - name: Add Android platform
+      - name: Add Android
         run: npx cap add android
 
-      # 🔄 Sincronizar arquivos
-      - name: Sync project
+      # 🔄 Sincronizar projeto
+      - name: Sync
         run: npx cap sync
 
       # 🔨 Build APK
-      - name: Build Debug APK
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      # 📦 Upload do APK
+      # 📦 Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
