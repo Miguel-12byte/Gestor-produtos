@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gestor de Produtos</title>
 
 <style>
 body{
   margin:0;
-  font-family:sans-serif;
+  font-family: Arial, sans-serif;
   background:#0f172a;
   color:#fff;
 }
@@ -21,12 +22,14 @@ header{
 
 .container{
   padding:15px;
+  max-width:600px;
+  margin:auto;
 }
 
 input, button{
   width:100%;
   padding:12px;
-  margin:5px 0;
+  margin:6px 0;
   border:none;
   border-radius:8px;
   font-size:14px;
@@ -41,6 +44,7 @@ button{
   background:#2563eb;
   color:#fff;
   cursor:pointer;
+  transition:0.2s;
 }
 
 button:hover{
@@ -55,6 +59,10 @@ button:hover{
   display:flex;
   justify-content:space-between;
   align-items:center;
+}
+
+.actions{
+  display:flex;
 }
 
 .actions button{
@@ -72,6 +80,7 @@ button:hover{
   margin-top:15px;
   font-weight:bold;
   text-align:right;
+  font-size:16px;
 }
 </style>
 </head>
@@ -85,9 +94,9 @@ button:hover{
 <h3>Cadastrar Produto</h3>
 
 <input id="name" placeholder="Nome do produto">
-<input id="price" type="number" placeholder="Preço">
+<input id="price" type="number" step="0.01" placeholder="Preço">
 
-<button onclick="addProduct()">Salvar</button>
+<button id="btnAdd">Salvar</button>
 
 <h3>Lista</h3>
 <div id="list"></div>
@@ -97,131 +106,108 @@ button:hover{
 </div>
 
 <script>
+const nameInput = document.getElementById('name')
+const priceInput = document.getElementById('price')
+const list = document.getElementById('list')
+const totalEl = document.getElementById('total')
+const btnAdd = document.getElementById('btnAdd')
+
 let products = JSON.parse(localStorage.getItem('produtos') || '[]')
 
-// ➕ Adicionar produto
-function addProduct(){
-  const nameInput = document.getElementById('name')
-  const priceInput = document.getElementById('price')
+// 🔄 salvar
+function save(){
+  localStorage.setItem('produtos', JSON.stringify(products))
+}
 
+// ➕ adicionar
+function addProduct(){
   const name = nameInput.value.trim()
-  const price = parseFloat(priceInput.value)
+  let price = parseFloat(priceInput.value)
 
   if(!name){
-    alert('Digite o nome')
+    alert('Digite o nome do produto')
     return
   }
 
-  products.push({
-    name,
-    price: isNaN(price) ? 0 : price
-  })
+  if(isNaN(price)) price = 0
+
+  products.push({ name, price })
 
   save()
-  nameInput.value = ''
-  priceInput.value = ''
+  clearInputs()
   render()
 }
 
-// ❌ Remover produto
+// ✏️ editar
+function editProduct(index){
+  const p = products[index]
+
+  const newName = prompt('Editar nome:', p.name)
+  if(!newName) return
+
+  let newPrice = parseFloat(prompt('Editar preço:', p.price))
+  if(isNaN(newPrice)) newPrice = 0
+
+  products[index] = {
+    name: newName.trim(),
+    price: newPrice
+  }
+
+  save()
+  render()
+}
+
+// ❌ remover
 function removeProduct(index){
-  if(confirm('Remover produto?')){
+  if(confirm('Deseja remover este produto?')){
     products.splice(index,1)
     save()
     render()
   }
 }
 
-// ✏️ Editar produto
-function editProduct(index){
-  const newName = prompt('Novo nome:', products[index].name)
-  if(!newName) return
-
-  const newPrice = parseFloat(prompt('Novo preço:', products[index].price))
-
-  products[index].name = newName
-  products[index].price = isNaN(newPrice) ? 0 : newPrice
-
-  save()
-  render()
+// 🧹 limpar inputs
+function clearInputs(){
+  nameInput.value = ''
+  priceInput.value = ''
+  nameInput.focus()
 }
 
-// 💾 Salvar no localStorage
-function save(){
-  localStorage.setItem('produtos', JSON.stringify(products))
-}
-
-// 🎨 Renderizar lista
+// 🎨 render
 function render(){
-  const list = document.getElementById('list')
-  const totalEl = document.getElementById('total')
-
   list.innerHTML = ''
-
   let total = 0
 
   products.forEach((p, i)=>{
     total += p.price
 
-    list.innerHTML += `
-      <div class="card">
-        <div>
-          <b>${p.name}</b><br>
-          R$ ${p.price.toFixed(2)}
-        </div>
-        <div class="actions">
-          <button onclick="editProduct(${i})">Editar</button>
-          <button class="delete" onclick="removeProduct(${i})">Excluir</button>
-        </div>
+    const item = document.createElement('div')
+    item.className = 'card'
+
+    item.innerHTML = `
+      <div>
+        <b>${p.name}</b><br>
+        R$ ${p.price.toFixed(2)}
+      </div>
+      <div class="actions">
+        <button onclick="editProduct(${i})">Editar</button>
+        <button class="delete" onclick="removeProduct(${i})">Excluir</button>
       </div>
     `
+
+    list.appendChild(item)
   })
 
   totalEl.innerText = "Total: R$ " + total.toFixed(2)
 }
 
-render()
-</script>
+// 🎯 eventos
+btnAdd.addEventListener('click', addProduct)
 
-</body>
-</html>
-
-<h3>Lista</h3>
-<div id="list"></div>
-
-</div>
-
-<script>
-let products = JSON.parse(localStorage.getItem('produtos') || '[]')
-
-function addProduct(){
-  const name = document.getElementById('name').value
-  const price = document.getElementById('price').value
-
-  if(!name){
-    alert('Digite o nome')
-    return
-  }
-
-  products.push({name, price})
-  localStorage.setItem('produtos', JSON.stringify(products))
-
-  render()
-}
-
-function render(){
-  const list = document.getElementById('list')
-  list.innerHTML = ''
-
-  products.forEach(p=>{
-    list.innerHTML += `
-      <div class="card">
-        <b>${p.name}</b><br>
-        R$ ${p.price || 0}
-      </div>
-    `
-  })
-}
+// permitir Enter
+priceInput.addEventListener('keypress', e=>{
+  if(e.key === 'Enter') addProduct()
+})
 
 render()
 </script>
