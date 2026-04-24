@@ -14,58 +14,67 @@ jobs:
 
     steps:
       # 📥 Clonar repositório
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 🟢 Node 24 (SEM CACHE → evita erro do package-lock)
-      - name: Setup Node
+      # 🟢 Node.js 24
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      # ☕ Java (necessário pro Android)
+      # ☕ Java 17 (necessário para Android)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # 📦 Instalar dependências (não quebra se não tiver)
+      # 📦 Instalar dependências (sem quebrar se não tiver lock file)
       - name: Install dependencies
-        run: npm install || true
+        run: |
+          if [ -f package.json ]; then
+            npm install --no-audit --no-fund || true
+          else
+            echo "Sem package.json, pulando install"
+          fi
 
-      # 🌐 Garantir que existe app web
-      - name: Create www
+      # 🌐 Garantir estrutura web
+      - name: Prepare web app
         run: |
           mkdir -p www
           if [ ! -f www/index.html ]; then
-            echo "<!doctype html><html><body><h1>Gestor OK</h1></body></html>" > www/index.html
+            echo "<!doctype html><html><body><h1>Gestor funcionando</h1></body></html>" > www/index.html
           fi
 
-      # ⚙️ Capacitor
+      # ⚙️ Instalar Capacitor
       - name: Install Capacitor
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
 
+      # ⚙️ Inicializar Capacitor
       - name: Init Capacitor
-        run: npx cap init gestor com.gestor.app --web-dir=www --yes
+        run: |
+          npx cap init gestor com.miguel.gestorprodutos --web-dir=www --yes
 
-      - name: Add Android
+      # 📱 Adicionar Android
+      - name: Add Android platform
         run: npx cap add android
 
-      - name: Sync
+      # 🔄 Sincronizar arquivos
+      - name: Sync project
         run: npx cap sync
 
       # 🔨 Build APK
-      - name: Build APK
+      - name: Build Debug APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
-      # 📦 Upload APK
+      # 📦 Upload do APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: gestor-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
