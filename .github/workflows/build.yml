@@ -10,57 +10,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 📥 Checkout
-      - name: Checkout
-        uses: actions/checkout@v4
+      # 📥 Clonar repo
+      - uses: actions/checkout@v4
 
-      # 🟢 Node (deixe o GitHub gerenciar internamente)
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      # 🟢 Node (estável)
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # ☕ Java 17
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      # ☕ Java
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
       # 📦 Dependências
-      - name: Install dependencies
-        run: npm install || true
+      - run: npm install || true
 
-      # 🌐 Garantir app web
-      - name: Ensure www
-        run: |
+      # 🌐 Garantir www
+      - run: |
           mkdir -p www
           if [ ! -f www/index.html ]; then
-            echo "<!doctype html><html><body><h1>Gestor OK</h1></body></html>" > www/index.html
+            echo "<!doctype html><html><body><h1>App OK</h1></body></html>" > www/index.html
           fi
 
       # ⚙️ Capacitor
-      - name: Install Capacitor
-        run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+      - run: npm install @capacitor/core @capacitor/cli @capacitor/android
 
       # 📱 Android
-      - name: Add Android
-        run: npx cap add android
+      - run: npx cap add android
 
-      - name: Sync
-        run: npx cap sync
+      - run: npx cap sync
 
-      # 🔨 Build APK
-      - name: Build APK
-        run: |
+      # 🔨 Build
+      - run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      # 📦 Upload
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      # 📦 Upload APK
+      - uses: actions/upload-artifact@v4
         with:
-          name: gestor-apk
+          name: app
           path: android/app/build/outputs/apk/debug/app-debug.apk
