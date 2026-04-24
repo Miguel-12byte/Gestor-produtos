@@ -7,64 +7,56 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 📥 Clonar repositório
+      # 📥 Checkout atualizado
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 🟢 Node 24
+      # 🟢 Node 24 REAL
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: '24.x'
 
-      # ☕ Java 17 (Android precisa disso)
+      # ☕ Java 17
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # 📦 Instalar dependências (sem quebrar)
+      # 📦 Dependências
       - name: Install dependencies
         run: npm install || true
 
-      # 🌐 Garantir pasta web
-      - name: Ensure www exists
+      # 🌐 Garantir app
+      - name: Ensure www
         run: |
           mkdir -p www
           if [ ! -f www/index.html ]; then
             echo "<!doctype html><html><body><h1>Gestor OK</h1></body></html>" > www/index.html
           fi
 
-      # ⚙️ Instalar Capacitor
+      # ⚙️ Capacitor
       - name: Install Capacitor
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      # 📱 Adicionar Android
+      # 📱 Android
       - name: Add Android
         run: npx cap add android
 
-      # 🔄 Sincronizar projeto
       - name: Sync
         run: npx cap sync
 
-      # 🔨 Build APK
+      # 🔨 Build
       - name: Build APK
         run: |
           cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-
-      # 📦 Upload APK
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: gestor-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          chmod
