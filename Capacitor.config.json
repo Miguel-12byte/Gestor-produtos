@@ -1,6 +1,5 @@
 {
   "appId": "com.miguel.gestorprodutos",
   "appName": "Gestor de Produtos",
-  "webDir": "www",
-  "bundledWebRuntime": false
+  "webDir": "www"
 }
