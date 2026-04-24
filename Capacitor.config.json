@@ -1,5 +1,9 @@
 {
   "appId": "com.miguel.gestorprodutos",
   "appName": "Gestor de Produtos",
-  "webDir": "."
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
 }
