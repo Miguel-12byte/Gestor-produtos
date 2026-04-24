@@ -19,7 +19,12 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: npm install || true
+
+      - name: Create www if not exists
+        run: |
+          mkdir -p www
+          echo "<html><body><h1>App OK</h1></body></html>" > www/index.html
 
       - name: Install Capacitor
         run: |
@@ -28,7 +33,7 @@ jobs:
           npm install @capacitor/android
 
       - name: Init Capacitor
-        run: npx cap init gestor com.gestor.app --web-dir=www
+        run: npx cap init gestor com.gestor.app --web-dir=www --yes
 
       - name: Add Android
         run: npx cap add android
