@@ -28,4 +28,4 @@ Pode ser convertido em APK usando Capacitor.
 
 👨‍💻 Autor
 
-Miguel-12byte
+Miguel-12Byte(Miguel Batista)
