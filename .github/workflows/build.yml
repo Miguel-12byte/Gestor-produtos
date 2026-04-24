@@ -47,11 +47,9 @@ jobs:
             echo "<!doctype html><html><body><h1>Gestor funcionando</h1></body></html>" > www/index.html
           fi
 
-      # ⚙️ Instalar Capacitor
-      - name: Install Capacitor
-        run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-
+      - name: Init Capacitor
+  run: |
+    npx cap init gestor com.miguel.gestorprodutos --web-dir=www || true
       # ⚙️ Inicializar Capacitor
       - name: Init Capacitor
         run: |
