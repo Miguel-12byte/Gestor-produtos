@@ -13,22 +13,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 📥 Clonar repositório
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 🟢 Node 24
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
+      # ☕ Java (OBRIGATÓRIO pro Android)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 📦 Instalar dependências
       - name: Install dependencies
         run: npm install || true
 
-      - name: Create www if not exists
+      # 🌐 Garantir app web
+      - name: Create www
         run: |
           mkdir -p www
-          echo "<!doctype html><html><body><h1>App OK</h1></body></html>" > www/index.html
+          echo "<!doctype html><html><body><h1>Gestor OK</h1></body></html>" > www/index.html
 
+      # ⚙️ Capacitor
       - name: Install Capacitor
         run: |
           npm install @capacitor/core
@@ -44,12 +56,14 @@ jobs:
       - name: Sync
         run: npx cap sync
 
+      # 🔨 Build APK
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
+      # 📦 Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
