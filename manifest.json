@@ -16,6 +16,7 @@ header{
   padding:15px;
   background:#2563eb;
   font-weight:bold;
+  text-align:center;
 }
 
 .container{
@@ -39,21 +40,45 @@ input{
 button{
   background:#2563eb;
   color:#fff;
+  cursor:pointer;
+}
+
+button:hover{
+  opacity:0.9;
 }
 
 .card{
   background:#111827;
-  padding:10px;
+  padding:12px;
   border-radius:8px;
   margin-top:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
+.actions button{
+  width:auto;
+  margin-left:5px;
+  padding:6px 10px;
+  font-size:12px;
+}
+
+.delete{
+  background:#dc2626;
+}
+
+.total{
+  margin-top:15px;
+  font-weight:bold;
+  text-align:right;
+}
 </style>
 </head>
 
 <body>
 
-<header>Gestor de Produtos</header>
+<header>📦 Gestor de Produtos</header>
 
 <div class="container">
 
@@ -63,6 +88,103 @@ button{
 <input id="price" type="number" placeholder="Preço">
 
 <button onclick="addProduct()">Salvar</button>
+
+<h3>Lista</h3>
+<div id="list"></div>
+
+<div class="total" id="total"></div>
+
+</div>
+
+<script>
+let products = JSON.parse(localStorage.getItem('produtos') || '[]')
+
+// ➕ Adicionar produto
+function addProduct(){
+  const nameInput = document.getElementById('name')
+  const priceInput = document.getElementById('price')
+
+  const name = nameInput.value.trim()
+  const price = parseFloat(priceInput.value)
+
+  if(!name){
+    alert('Digite o nome')
+    return
+  }
+
+  products.push({
+    name,
+    price: isNaN(price) ? 0 : price
+  })
+
+  save()
+  nameInput.value = ''
+  priceInput.value = ''
+  render()
+}
+
+// ❌ Remover produto
+function removeProduct(index){
+  if(confirm('Remover produto?')){
+    products.splice(index,1)
+    save()
+    render()
+  }
+}
+
+// ✏️ Editar produto
+function editProduct(index){
+  const newName = prompt('Novo nome:', products[index].name)
+  if(!newName) return
+
+  const newPrice = parseFloat(prompt('Novo preço:', products[index].price))
+
+  products[index].name = newName
+  products[index].price = isNaN(newPrice) ? 0 : newPrice
+
+  save()
+  render()
+}
+
+// 💾 Salvar no localStorage
+function save(){
+  localStorage.setItem('produtos', JSON.stringify(products))
+}
+
+// 🎨 Renderizar lista
+function render(){
+  const list = document.getElementById('list')
+  const totalEl = document.getElementById('total')
+
+  list.innerHTML = ''
+
+  let total = 0
+
+  products.forEach((p, i)=>{
+    total += p.price
+
+    list.innerHTML += `
+      <div class="card">
+        <div>
+          <b>${p.name}</b><br>
+          R$ ${p.price.toFixed(2)}
+        </div>
+        <div class="actions">
+          <button onclick="editProduct(${i})">Editar</button>
+          <button class="delete" onclick="removeProduct(${i})">Excluir</button>
+        </div>
+      </div>
+    `
+  })
+
+  totalEl.innerText = "Total: R$ " + total.toFixed(2)
+}
+
+render()
+</script>
+
+</body>
+</html>
 
 <h3>Lista</h3>
 <div id="list"></div>
