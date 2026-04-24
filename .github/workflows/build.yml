@@ -5,7 +5,6 @@ on:
     branches:
       - main
 
-# 🔥 força GitHub Actions usar Node 24 (novo padrão)
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -18,68 +17,52 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 🟢 Node.js 24 (oficial)
-      - name: Setup Node.js 24
+      # 🟢 Node 24 (SEM CACHE → evita erro do package-lock)
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
 
-      # ☕ Java 17 (necessário pro Android/Gradle)
+      # ☕ Java (necessário pro Android)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # 📦 Instalar dependências (sem quebrar se não tiver package.json completo)
+      # 📦 Instalar dependências (não quebra se não tiver)
       - name: Install dependencies
-        run: |
-          if [ -f package.json ]; then
-            npm install
-          else
-            echo "Sem package.json, pulando npm install"
-          fi
+        run: npm install || true
 
-      # 🌐 Garantir estrutura web (Capacitor precisa disso)
-      - name: Ensure www exists
+      # 🌐 Garantir que existe app web
+      - name: Create www
         run: |
           mkdir -p www
           if [ ! -f www/index.html ]; then
             echo "<!doctype html><html><body><h1>Gestor OK</h1></body></html>" > www/index.html
           fi
 
-      # ⚙️ Instalar Capacitor
+      # ⚙️ Capacitor
       - name: Install Capacitor
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      # ⚙️ Inicializar projeto Capacitor
       - name: Init Capacitor
-        run: |
-          npx cap init gestor com.gestor.app --web-dir=www --yes
+        run: npx cap init gestor com.gestor.app --web-dir=www --yes
 
-      # 📱 Adicionar Android
-      - name: Add Android platform
+      - name: Add Android
         run: npx cap add android
 
-      # 🔄 Sincronizar
-      - name: Sync Capacitor
+      - name: Sync
         run: npx cap sync
 
       # 🔨 Build APK
-      - name: Build Debug APK
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      # 📦 Upload do APK
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
       # 📦 Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
