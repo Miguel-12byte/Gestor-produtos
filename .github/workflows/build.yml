@@ -22,16 +22,19 @@ jobs:
         run: npm install
 
       - name: Install Capacitor
-        run: npm install @capacitor/core @capacitor/cli
+        run: |
+          npm install @capacitor/core
+          npm install @capacitor/cli
+          npm install @capacitor/android
 
       - name: Init Capacitor
-        run: npx cap init "Gestor de Produtos" "com.gestor.produtos" --web-dir=.
+        run: npx cap init gestor com.gestor.app --web-dir=www
 
       - name: Add Android
         run: npx cap add android
 
-      - name: Copy files
-        run: npx cap copy
+      - name: Sync
+        run: npx cap sync
 
       - name: Build APK
         run: |
@@ -40,7 +43,7 @@ jobs:
           ./gradlew assembleDebug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: app-apk
+          name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
