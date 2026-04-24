@@ -1,43 +1,41 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gestor de Produtos</title>
+<script>
+let produtos = JSON.parse(localStorage.getItem('produtos')||'[]')
 
-<style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#0f172a;
-  color:#fff;
-}
-header{
-  padding:15px;
-  background:#2563eb;
-  font-weight:bold;
-}
-.container{
-  padding:15px;
-}
-input, button{
-  width:100%;
-  padding:12px;
-  margin:5px 0;
-  border:none;
-  border-radius:8px;
-}
-input{ background:#111827; color:#fff; }
-button{ background:#2563eb; color:#fff; }
-.card{
-  background:#111827;
-  padding:10px;
-  border-radius:8px;
-  margin-top:10px;
-}
-</style>
-</head>
+function add(){
+  let n = name.value.trim()
+  let p = parseFloat(price.value)
 
-<body>
+  if(!n) return alert('Digite o nome')
+  if(isNaN(p)) p = 0
+
+  produtos.push({n,p})
+  localStorage.setItem('produtos',JSON.stringify(produtos))
+
+  name.value=''
+  price.value=''
+
+  render()
+}
+
+function del(i){
+  produtos.splice(i,1)
+  localStorage.setItem('produtos',JSON.stringify(produtos))
+  render()
+}
+
+function render(){
+  list.innerHTML=''
+  produtos.forEach((x,i)=>{
+    list.innerHTML += `
+      <div class="card">
+        ${x.n} - R$ ${x.p.toFixed(2)}
+        <button onclick="del(${i})">Excluir</button>
+      </div>`
+  })
+}
+
+render()
+</script><body>
 
 <header>Gestor de Produtos</header>
 
