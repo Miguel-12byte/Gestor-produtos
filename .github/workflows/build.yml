@@ -1,108 +1,15 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gestor de Produtos PRO</title>
-
-<style>
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#0f172a;
-  color:#fff;
-}
-
-header{
-  padding:15px;
-  background:#2563eb;
-  text-align:center;
-  font-weight:bold;
-}
-
-.container{
-  padding:15px;
-  max-width:700px;
-  margin:auto;
-}
-
-input, select, button{
-  width:100%;
-  padding:12px;
-  margin:6px 0;
-  border:none;
-  border-radius:8px;
-}
-
-input, select{
-  background:#111827;
-  color:#fff;
-}
-
-button{
-  background:#2563eb;
-  color:#fff;
-}
-
-.card{
-  background:#111827;
-  padding:12px;
-  border-radius:8px;
-  margin-top:10px;
-}
-
-.flex{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-}
-
-.small{
-  font-size:12px;
-  opacity:.7;
-}
-
-.total{
-  margin-top:15px;
-  text-align:right;
-  font-weight:bold;
-}
-</style>
-</head>
-
-<body>
-
-<header>📦 Gestor PRO</header>
-
-<div class="container">
-
-<h3>Novo Produto</h3>
-
-<input id="name" placeholder="Nome">
-<input id="price" type="number" placeholder="Preço">
-<input id="qty" type="number" placeholder="Quantidade">
-
-<select id="category">
-  <option value="Geral">Geral</option>
-  <option value="Alimentos">Alimentos</option>
-  <option value="Bebidas">Bebidas</option>
-  <option value="Limpeza">Limpeza</option>
-</select>
-
-<button onclick="add()">Salvar</button>
-
-<input id="search" placeholder="🔍 Buscar..." oninput="render()">
-
-<div id="list"></div>
-
-<div class="total" id="total"></div>
-
-<button onclick="exportData()">📤 Exportar Backup</button>
-
-</div>
-
 <script>
-let data = JSON.parse(localStorage.getItem('produtos')||'[]')
+let data = JSON.parse(localStorage.getItem('produtos') || '[]')
+
+// 🔄 MIGRAR DADOS ANTIGOS (IMPORTANTE)
+data = data.map(p => ({
+  name: p.name || p.n || '',
+  price: Number(p.price ?? p.p ?? 0),
+  qty: Number(p.qty ?? 0),
+  category: p.category || 'Geral'
+}))
+
+save()
 
 function save(){
   localStorage.setItem('produtos', JSON.stringify(data))
@@ -110,13 +17,16 @@ function save(){
 
 function add(){
   const name = document.getElementById('name').value.trim()
-  const price = parseFloat(document.getElementById('price').value)||0
-  const qty = parseInt(document.getElementById('qty').value)||0
+  const price = parseFloat(document.getElementById('price').value) || 0
+  const qty = parseInt(document.getElementById('qty').value) || 0
   const category = document.getElementById('category').value
 
-  if(!name) return alert('Nome obrigatório')
+  if(!name){
+    alert('Nome obrigatório')
+    return
+  }
 
-  data.push({name, price, qty, category})
+  data.push({ name, price, qty, category })
   save()
   clear()
   render()
@@ -129,7 +39,7 @@ function clear(){
 }
 
 function remove(i){
-  if(confirm('Excluir?')){
+  if(confirm('Excluir produto?')){
     data.splice(i,1)
     save()
     render()
@@ -138,31 +48,36 @@ function remove(i){
 
 function render(){
   const list = document.getElementById('list')
-  const search = document.getElementById('search').value.toLowerCase()
+  const searchInput = document.getElementById('search')
+  const search = (searchInput.value || '').toLowerCase()
 
-  list.innerHTML=''
-  let total=0
+  list.innerHTML = ''
+  let total = 0
 
   data
-  .filter(p=>p.name.toLowerCase().includes(search))
-  .forEach((p,i)=>{
-    total += p.price * p.qty
+    .filter(p => (p.name || '').toLowerCase().includes(search))
+    .forEach((p,i)=>{
+      const price = Number(p.price) || 0
+      const qty = Number(p.qty) || 0
 
-    list.innerHTML += `
-      <div class="card">
-        <div class="flex">
-          <div>
-            <b>${p.name}</b><br>
-            <span class="small">${p.category}</span><br>
-            R$ ${p.price} | Qtd: ${p.qty}
+      total += price * qty
+
+      list.innerHTML += `
+        <div class="card">
+          <div class="flex">
+            <div>
+              <b>${p.name || 'Sem nome'}</b><br>
+              <span class="small">${p.category || 'Geral'}</span><br>
+              R$ ${price.toFixed(2)} | Qtd: ${qty}
+            </div>
+            <button onclick="remove(${i})">X</button>
           </div>
-          <button onclick="remove(${i})">X</button>
         </div>
-      </div>
-    `
-  })
+      `
+    })
 
-  document.getElementById('total').innerText = "Total estoque: R$ "+total.toFixed(2)
+  document.getElementById('total').innerText =
+    "Total estoque: R$ " + total.toFixed(2)
 }
 
 function exportData(){
@@ -173,8 +88,6 @@ function exportData(){
   a.click()
 }
 
+// 🚀 iniciar
 render()
 </script>
-
-</body>
-</html>
