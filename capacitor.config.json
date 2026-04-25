@@ -1,0 +1,13 @@
+{
+  "appId": "com.gestor.produtos",
+  "appName": "Gestor Produtos",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
