@@ -1,6 +1,6 @@
 {
-  "appId": "com.example.app",
-  "appName": "Gestor Produtos",
+  "appId": "com.miguel.gestorprodutos",
+  "appName": "Gestor de Produtos",
   "webDir": "www",
   "server": {
     "androidScheme": "https"
