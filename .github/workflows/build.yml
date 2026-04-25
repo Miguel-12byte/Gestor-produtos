@@ -1,54 +1,180 @@
-name: Build APK
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestor de Produtos PRO</title>
 
-on:
-  push:
-    branches:
-      - main
+<style>
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#0f172a;
+  color:#fff;
+}
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+header{
+  padding:15px;
+  background:#2563eb;
+  text-align:center;
+  font-weight:bold;
+}
 
-    steps:
-      # 📥 Clonar repo
-      - uses: actions/checkout@v4
+.container{
+  padding:15px;
+  max-width:700px;
+  margin:auto;
+}
 
-      # 🟢 Node
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
+input, select, button{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border:none;
+  border-radius:8px;
+}
 
-      # ☕ Java
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+input, select{
+  background:#111827;
+  color:#fff;
+}
 
-      # 📦 Dependências
-      - run: npm install || true
+button{
+  background:#2563eb;
+  color:#fff;
+}
 
-      # 🌐 Copiar seu app
-      - name: Copy app
-        run: |
-          mkdir -p www
-          cp index.html www/index.html
+.card{
+  background:#111827;
+  padding:12px;
+  border-radius:8px;
+  margin-top:10px;
+}
 
-      # ⚙️ Capacitor
-      - run: npm install @capacitor/core @capacitor/cli @capacitor/android
+.flex{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
 
-      # 📱 Android
-      - run: npx cap add android
+.small{
+  font-size:12px;
+  opacity:.7;
+}
 
-      - run: npx cap sync
+.total{
+  margin-top:15px;
+  text-align:right;
+  font-weight:bold;
+}
+</style>
+</head>
 
-      # 🔨 Build
-      - run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+<body>
 
-      # 📦 Upload APK
-      - uses: actions/upload-artifact@v4
-        with:
-          name: app
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+<header>📦 Gestor PRO</header>
+
+<div class="container">
+
+<h3>Novo Produto</h3>
+
+<input id="name" placeholder="Nome">
+<input id="price" type="number" placeholder="Preço">
+<input id="qty" type="number" placeholder="Quantidade">
+
+<select id="category">
+  <option value="Geral">Geral</option>
+  <option value="Alimentos">Alimentos</option>
+  <option value="Bebidas">Bebidas</option>
+  <option value="Limpeza">Limpeza</option>
+</select>
+
+<button onclick="add()">Salvar</button>
+
+<input id="search" placeholder="🔍 Buscar..." oninput="render()">
+
+<div id="list"></div>
+
+<div class="total" id="total"></div>
+
+<button onclick="exportData()">📤 Exportar Backup</button>
+
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem('produtos')||'[]')
+
+function save(){
+  localStorage.setItem('produtos', JSON.stringify(data))
+}
+
+function add(){
+  const name = document.getElementById('name').value.trim()
+  const price = parseFloat(document.getElementById('price').value)||0
+  const qty = parseInt(document.getElementById('qty').value)||0
+  const category = document.getElementById('category').value
+
+  if(!name) return alert('Nome obrigatório')
+
+  data.push({name, price, qty, category})
+  save()
+  clear()
+  render()
+}
+
+function clear(){
+  name.value=''
+  price.value=''
+  qty.value=''
+}
+
+function remove(i){
+  if(confirm('Excluir?')){
+    data.splice(i,1)
+    save()
+    render()
+  }
+}
+
+function render(){
+  const list = document.getElementById('list')
+  const search = document.getElementById('search').value.toLowerCase()
+
+  list.innerHTML=''
+  let total=0
+
+  data
+  .filter(p=>p.name.toLowerCase().includes(search))
+  .forEach((p,i)=>{
+    total += p.price * p.qty
+
+    list.innerHTML += `
+      <div class="card">
+        <div class="flex">
+          <div>
+            <b>${p.name}</b><br>
+            <span class="small">${p.category}</span><br>
+            R$ ${p.price} | Qtd: ${p.qty}
+          </div>
+          <button onclick="remove(${i})">X</button>
+        </div>
+      </div>
+    `
+  })
+
+  document.getElementById('total').innerText = "Total estoque: R$ "+total.toFixed(2)
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(data)], {type:"application/json"})
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = "backup.json"
+  a.click()
+}
+
+render()
+</script>
+
+</body>
+</html>
