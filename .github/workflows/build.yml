@@ -55,6 +55,7 @@ button{
 .flex{
   display:flex;
   justify-content:space-between;
+  align-items:center;
   gap:10px;
 }
 
@@ -102,54 +103,101 @@ button{
 </div>
 
 <script>
+
 // 🔐 CARREGAMENTO SEGURO
 var data = []
-try {
-  var stored = localStorage.getItem('produtos')
-  data = stored ? JSON.parse(stored) : []
-} catch (e) {
-  data = []
+
+function loadData(){
+  try{
+    var raw = localStorage.getItem('produtos')
+    if(!raw){
+      data = []
+      return
+    }
+
+    var parsed = JSON.parse(raw)
+
+    if(!Array.isArray(parsed)){
+      data = []
+      return
+    }
+
+    data = parsed
+  }catch(e){
+    data = []
+  }
 }
 
-// 🔄 NORMALIZAR DADOS
-data = data.map(function(p){
-  return {
-    name: (p && (p.name || p.n)) || '',
-    price: Number((p && (p.price ?? p.p)) || 0),
-    qty: Number((p && p.qty) || 0),
-    category: (p && p.category) || 'Geral'
+// 🔄 NORMALIZAR (compatível com versões antigas)
+function normalize(){
+  var result = []
+
+  for(var i=0; i<data.length; i++){
+    var p = data[i] || {}
+
+    var name = ''
+    if(p.name){ name = p.name }
+    else if(p.n){ name = p.n }
+
+    var price = 0
+    if(p.price !== undefined){ price = Number(p.price) }
+    else if(p.p !== undefined){ price = Number(p.p) }
+
+    var qty = Number(p.qty || 0)
+    var category = p.category || 'Geral'
+
+    result.push({
+      name: name,
+      price: isNaN(price) ? 0 : price,
+      qty: isNaN(qty) ? 0 : qty,
+      category: category
+    })
   }
-})
 
-save()
+  data = result
+}
 
+// 💾 SALVAR
 function save(){
   localStorage.setItem('produtos', JSON.stringify(data))
 }
 
 // ➕ ADICIONAR
-document.getElementById('btnAdd').onclick = function(){
-  var name = document.getElementById('name').value.trim()
-  var price = parseFloat(document.getElementById('price').value) || 0
-  var qty = parseInt(document.getElementById('qty').value) || 0
-  var category = document.getElementById('category').value
+function add(){
+  var nameEl = document.getElementById('name')
+  var priceEl = document.getElementById('price')
+  var qtyEl = document.getElementById('qty')
+  var categoryEl = document.getElementById('category')
+
+  var name = nameEl.value.trim()
+  var price = parseFloat(priceEl.value)
+  var qty = parseInt(qtyEl.value)
 
   if(!name){
     alert('Nome obrigatório')
     return
   }
 
-  data.push({name:name, price:price, qty:qty, category:category})
+  if(isNaN(price)) price = 0
+  if(isNaN(qty)) qty = 0
+
+  data.push({
+    name: name,
+    price: price,
+    qty: qty,
+    category: categoryEl.value
+  })
+
   save()
   clearInputs()
   render()
 }
 
-// 🧹 LIMPAR
+// 🧹 LIMPAR CAMPOS
 function clearInputs(){
-  document.getElementById('name').value=''
-  document.getElementById('price').value=''
-  document.getElementById('qty').value=''
+  document.getElementById('name').value = ''
+  document.getElementById('price').value = ''
+  document.getElementById('qty').value = ''
 }
 
 // ❌ REMOVER
@@ -162,23 +210,28 @@ function removeItem(index){
 }
 
 // 🔍 BUSCA
-document.getElementById('search').oninput = render
+document.getElementById('search').oninput = function(){
+  render()
+}
 
-// 🎨 RENDER SEGURO (SEM innerHTML)
+// 🎨 RENDER SEGURO
 function render(){
   var list = document.getElementById('list')
-  var search = (document.getElementById('search').value || '').toLowerCase()
+  var search = document.getElementById('search').value.toLowerCase()
 
-  // limpar lista
   while(list.firstChild){
     list.removeChild(list.firstChild)
   }
 
   var total = 0
 
-  data.forEach(function(p,i){
+  for(var i=0; i<data.length; i++){
+    var p = data[i]
+
     var name = (p.name || '').toLowerCase()
-    if(name.indexOf(search) === -1) return
+    if(name.indexOf(search) === -1){
+      continue
+    }
 
     var price = Number(p.price) || 0
     var qty = Number(p.qty) || 0
@@ -210,22 +263,24 @@ function render(){
 
     var btn = document.createElement('button')
     btn.textContent = 'X'
-    btn.onclick = function(){
-      removeItem(i)
-    }
+    btn.onclick = (function(index){
+      return function(){
+        removeItem(index)
+      }
+    })(i)
 
     flex.appendChild(info)
     flex.appendChild(btn)
     card.appendChild(flex)
     list.appendChild(card)
-  })
+  }
 
   document.getElementById('total').textContent =
     'Total estoque: R$ ' + total.toFixed(2)
 }
 
 // 📤 EXPORTAR
-document.getElementById('btnExport').onclick = function(){
+function exportData(){
   var blob = new Blob([JSON.stringify(data)], {type:'application/json'})
   var a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
@@ -233,8 +288,16 @@ document.getElementById('btnExport').onclick = function(){
   a.click()
 }
 
-// 🚀 INICIAR
+// 🎯 EVENTOS
+document.getElementById('btnAdd').onclick = add
+document.getElementById('btnExport').onclick = exportData
+
+// 🚀 INIT
+loadData()
+normalize()
+save()
 render()
+
 </script>
 
 </body>
