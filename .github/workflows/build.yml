@@ -123,9 +123,9 @@ function add(){
 }
 
 function clear(){
-  name.value=''
-  price.value=''
-  qty.value=''
+  ['name','price','qty'].forEach(id=>{
+    document.getElementById(id).value = ''
+  })
 }
 
 function remove(i){
