@@ -152,7 +152,7 @@ function add(){
   render()
 }
 
-// 🧹 LIMPAR CAMPOS
+// 🧹 LIMPAR
 function clearInputs(){
   ['name','price','qty'].forEach(id=>{
     document.getElementById(id).value = ''
@@ -168,7 +168,7 @@ function remove(i){
   }
 }
 
-// 🎨 RENDER
+// 🎨 RENDER PROFISSIONAL (SEM innerHTML +=)
 function render(){
   const list = document.getElementById('list')
   const searchEl = document.getElementById('search')
@@ -185,18 +185,27 @@ function render(){
 
       total += price * qty
 
-      list.innerHTML += `
-        <div class="card">
-          <div class="flex">
-            <div>
-              <b>${p.name || 'Sem nome'}</b><br>
-              <span class="small">${p.category || 'Geral'}</span><br>
-              R$ ${price.toFixed(2)} | Qtd: ${qty}
-            </div>
-            <button onclick="remove(${i})">X</button>
-          </div>
-        </div>
+      const card = document.createElement('div')
+      card.className = 'card'
+
+      const flex = document.createElement('div')
+      flex.className = 'flex'
+
+      const info = document.createElement('div')
+      info.innerHTML = `
+        <b>${p.name || 'Sem nome'}</b><br>
+        <span class="small">${p.category || 'Geral'}</span><br>
+        R$ ${price.toFixed(2)} | Qtd: ${qty}
       `
+
+      const btn = document.createElement('button')
+      btn.textContent = 'X'
+      btn.onclick = () => remove(i)
+
+      flex.appendChild(info)
+      flex.appendChild(btn)
+      card.appendChild(flex)
+      list.appendChild(card)
     })
 
   document.getElementById('total').innerText =
