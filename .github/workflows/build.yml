@@ -1,25 +1,145 @@
-<script>
-let data = JSON.parse(localStorage.getItem('produtos') || '[]')
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestor de Produtos PRO</title>
 
-// 🔄 MIGRAR DADOS ANTIGOS (IMPORTANTE)
+<style>
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#0f172a;
+  color:#fff;
+}
+
+header{
+  padding:15px;
+  background:#2563eb;
+  text-align:center;
+  font-weight:bold;
+}
+
+.container{
+  padding:15px;
+  max-width:700px;
+  margin:auto;
+}
+
+input, select, button{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border:none;
+  border-radius:8px;
+}
+
+input, select{
+  background:#111827;
+  color:#fff;
+}
+
+button{
+  background:#2563eb;
+  color:#fff;
+  cursor:pointer;
+}
+
+.card{
+  background:#111827;
+  padding:12px;
+  border-radius:8px;
+  margin-top:10px;
+}
+
+.flex{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.small{
+  font-size:12px;
+  opacity:.7;
+}
+
+.total{
+  margin-top:15px;
+  text-align:right;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>📦 Gestor PRO</header>
+
+<div class="container">
+
+<h3>Novo Produto</h3>
+
+<input id="name" placeholder="Nome">
+<input id="price" type="number" placeholder="Preço">
+<input id="qty" type="number" placeholder="Quantidade">
+
+<select id="category">
+  <option value="Geral">Geral</option>
+  <option value="Alimentos">Alimentos</option>
+  <option value="Bebidas">Bebidas</option>
+  <option value="Limpeza">Limpeza</option>
+</select>
+
+<button onclick="add()">Salvar</button>
+
+<input id="search" placeholder="🔍 Buscar..." oninput="render()">
+
+<div id="list"></div>
+
+<div class="total" id="total"></div>
+
+<button onclick="exportData()">📤 Exportar Backup</button>
+
+</div>
+
+<script>
+// 🔐 CARREGAMENTO SEGURO
+let data = []
+
+try {
+  const stored = localStorage.getItem('produtos')
+  data = stored ? JSON.parse(stored) : []
+} catch (e) {
+  console.warn('Erro ao ler localStorage, resetando...')
+  data = []
+}
+
+// 🔄 MIGRAR DADOS ANTIGOS
 data = data.map(p => ({
-  name: p.name || p.n || '',
-  price: Number(p.price ?? p.p ?? 0),
-  qty: Number(p.qty ?? 0),
-  category: p.category || 'Geral'
+  name: p?.name || p?.n || '',
+  price: Number(p?.price ?? p?.p ?? 0),
+  qty: Number(p?.qty ?? 0),
+  category: p?.category || 'Geral'
 }))
 
 save()
 
+// 💾 SALVAR
 function save(){
   localStorage.setItem('produtos', JSON.stringify(data))
 }
 
+// ➕ ADICIONAR
 function add(){
-  const name = document.getElementById('name').value.trim()
-  const price = parseFloat(document.getElementById('price').value) || 0
-  const qty = parseInt(document.getElementById('qty').value) || 0
-  const category = document.getElementById('category').value
+  const nameEl = document.getElementById('name')
+  const priceEl = document.getElementById('price')
+  const qtyEl = document.getElementById('qty')
+  const categoryEl = document.getElementById('category')
+
+  const name = nameEl.value.trim()
+  const price = parseFloat(priceEl.value) || 0
+  const qty = parseInt(qtyEl.value) || 0
+  const category = categoryEl.value
 
   if(!name){
     alert('Nome obrigatório')
@@ -28,16 +148,18 @@ function add(){
 
   data.push({ name, price, qty, category })
   save()
-  clear()
+  clearInputs()
   render()
 }
 
-function clear(){
+// 🧹 LIMPAR CAMPOS
+function clearInputs(){
   ['name','price','qty'].forEach(id=>{
     document.getElementById(id).value = ''
   })
 }
 
+// ❌ REMOVER
 function remove(i){
   if(confirm('Excluir produto?')){
     data.splice(i,1)
@@ -46,10 +168,11 @@ function remove(i){
   }
 }
 
+// 🎨 RENDER
 function render(){
   const list = document.getElementById('list')
-  const searchInput = document.getElementById('search')
-  const search = (searchInput.value || '').toLowerCase()
+  const searchEl = document.getElementById('search')
+  const search = (searchEl.value || '').toLowerCase()
 
   list.innerHTML = ''
   let total = 0
@@ -80,6 +203,7 @@ function render(){
     "Total estoque: R$ " + total.toFixed(2)
 }
 
+// 📤 EXPORTAR
 function exportData(){
   const blob = new Blob([JSON.stringify(data)], {type:"application/json"})
   const a = document.createElement('a')
@@ -88,6 +212,9 @@ function exportData(){
   a.click()
 }
 
-// 🚀 iniciar
+// 🚀 INICIAR
 render()
 </script>
+
+</body>
+</html>
