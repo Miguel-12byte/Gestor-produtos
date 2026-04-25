@@ -1,304 +1,144 @@
 <!doctype html>
+
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gestor de Produtos PRO</title>
-
-<style>
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#0f172a;
-  color:#fff;
-}
-
-header{
-  padding:15px;
-  background:#2563eb;
-  text-align:center;
-  font-weight:bold;
-}
-
-.container{
-  padding:15px;
-  max-width:700px;
-  margin:auto;
-}
-
-input, select, button{
-  width:100%;
-  padding:12px;
-  margin:6px 0;
-  border:none;
-  border-radius:8px;
-}
-
-input, select{
-  background:#111827;
-  color:#fff;
-}
-
-button{
-  background:#2563eb;
-  color:#fff;
-  cursor:pointer;
-}
-
-.card{
-  background:#111827;
-  padding:12px;
-  border-radius:8px;
-  margin-top:10px;
-}
-
-.flex{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-
-.small{
-  font-size:12px;
-  opacity:.7;
-}
-
-.total{
-  margin-top:15px;
-  text-align:right;
-  font-weight:bold;
-}
-</style>
-</head>
-
-<body>
-
-<header>📦 Gestor PRO</header>
-
-<div class="container">
-
-<h3>Novo Produto</h3>
-
+<title>Gestor PRO Firebase</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><style>
+body{margin:0;font-family:system-ui;background:#0f172a;color:#fff}
+header{padding:15px;background:#2563eb;text-align:center;font-weight:bold}
+.container{padding:15px;max-width:900px;margin:auto}
+input,select,button{width:100%;padding:10px;margin:5px 0;border:none;border-radius:8px}
+input,select{background:#111827;color:#fff}
+button{background:#2563eb;color:#fff;cursor:pointer}
+.card{background:#111827;padding:10px;border-radius:8px;margin-top:10px}
+.flex{display:flex;justify-content:space-between;gap:10px}
+.small{font-size:12px;opacity:.7}
+canvas{background:#fff;border-radius:10px;margin-top:20px}
+</style></head><body>
+<header>📦 Gestor PRO Firebase</header>
+<div class="container"><h3>Login</h3>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button><h3>Produto</h3>
 <input id="name" placeholder="Nome">
 <input id="price" type="number" placeholder="Preço">
-<input id="qty" type="number" placeholder="Quantidade">
+<input id="qty" type="number" placeholder="Quantidade"><select id="category"></select> <input id="newCategory" placeholder="Nova categoria"> <button onclick="addCategory()">+ Categoria</button>
 
-<select id="category">
-  <option value="Geral">Geral</option>
-  <option value="Alimentos">Alimentos</option>
-  <option value="Bebidas">Bebidas</option>
-  <option value="Limpeza">Limpeza</option>
-</select>
+<button onclick="saveProduct()">Salvar</button>
 
-<button id="btnAdd">Salvar</button>
+<input id="search" placeholder="Buscar">
+<div id="list"></div><h3>Gráfico</h3>
+<canvas id="chart"></canvas></div><script>
 
-<input id="search" placeholder="🔍 Buscar...">
+// 🔥 CONFIG FIREBASE (SUBSTITUIR PELOS SEUS DADOS)
+const firebaseConfig = {
+  apiKey: "SUA_KEY",
+  authDomain: "SEU_DOMINIO",
+  projectId: "SEU_ID"
+}
+firebase.initializeApp(firebaseConfig)
+const auth = firebase.auth()
+const db = firebase.firestore()
 
-<div id="list"></div>
-<div class="total" id="total"></div>
+let user = null
+let products = []
+let categories = ['Geral']
+let editIndex = null
 
-<button id="btnExport">📤 Exportar Backup</button>
-
-</div>
-
-<script>
-
-// 🔐 CARREGAMENTO SEGURO
-var data = []
-
-function loadData(){
-  try{
-    var raw = localStorage.getItem('produtos')
-    if(!raw){
-      data = []
-      return
-    }
-
-    var parsed = JSON.parse(raw)
-
-    if(!Array.isArray(parsed)){
-      data = []
-      return
-    }
-
-    data = parsed
-  }catch(e){
-    data = []
-  }
+function login(){
+  const email = email.value
+  const pass = password.value
+  auth.signInWithEmailAndPassword(email,pass)
 }
 
-// 🔄 NORMALIZAR (compatível com versões antigas)
-function normalize(){
-  var result = []
-
-  for(var i=0; i<data.length; i++){
-    var p = data[i] || {}
-
-    var name = ''
-    if(p.name){ name = p.name }
-    else if(p.n){ name = p.n }
-
-    var price = 0
-    if(p.price !== undefined){ price = Number(p.price) }
-    else if(p.p !== undefined){ price = Number(p.p) }
-
-    var qty = Number(p.qty || 0)
-    var category = p.category || 'Geral'
-
-    result.push({
-      name: name,
-      price: isNaN(price) ? 0 : price,
-      qty: isNaN(qty) ? 0 : qty,
-      category: category
-    })
+auth.onAuthStateChanged(u=>{
+  if(u){
+    user = u
+    load()
   }
+})
 
-  data = result
+async function load(){
+  const snap = await db.collection('users').doc(user.uid).get()
+  const data = snap.data() || {}
+
+  products = data.products || []
+  categories = data.categories || ['Geral']
+
+  renderCategories()
+  render()
 }
 
-// 💾 SALVAR
-function save(){
-  localStorage.setItem('produtos', JSON.stringify(data))
-}
-
-// ➕ ADICIONAR
-function add(){
-  var nameEl = document.getElementById('name')
-  var priceEl = document.getElementById('price')
-  var qtyEl = document.getElementById('qty')
-  var categoryEl = document.getElementById('category')
-
-  var name = nameEl.value.trim()
-  var price = parseFloat(priceEl.value)
-  var qty = parseInt(qtyEl.value)
-
-  if(!name){
-    alert('Nome obrigatório')
-    return
-  }
-
-  if(isNaN(price)) price = 0
-  if(isNaN(qty)) qty = 0
-
-  data.push({
-    name: name,
-    price: price,
-    qty: qty,
-    category: categoryEl.value
+async function saveDB(){
+  await db.collection('users').doc(user.uid).set({
+    products,
+    categories
   })
+}
 
-  save()
+function renderCategories(){
+  const select = document.getElementById('category')
+  select.innerHTML = ''
+  categories.forEach(c=>{
+    const o = document.createElement('option')
+    o.textContent = c
+    select.appendChild(o)
+  })
+}
+
+function addCategory(){
+  const val = newCategory.value.trim()
+  if(!val) return
+  categories.push(val)
+  newCategory.value=''
+  renderCategories()
+  saveDB()
+}
+
+function saveProduct(){
+  const p = {
+    name: name.value,
+    price: Number(price.value),
+    qty: Number(qty.value),
+    category: category.value
+  }
+
+  if(editIndex !== null){
+    products[editIndex] = p
+    editIndex = null
+  }else{
+    products.push(p)
+  }
+
   clearInputs()
+  saveDB()
   render()
 }
 
-// 🧹 LIMPAR CAMPOS
 function clearInputs(){
-  document.getElementById('name').value = ''
-  document.getElementById('price').value = ''
-  document.getElementById('qty').value = ''
+  name.value=''
+  price.value=''
+  qty.value=''
 }
 
-// ❌ REMOVER
-function removeItem(index){
-  if(confirm('Excluir produto?')){
-    data.splice(index,1)
-    save()
-    render()
-  }
+function editItem(i){
+  const p = products[i]
+  name.value = p.name
+  price.value = p.price
+  qty.value = p.qty
+  category.value = p.category
+  editIndex = i
 }
 
-// 🔍 BUSCA
-document.getElementById('search').oninput = function(){
+function removeItem(i){
+  products.splice(i,1)
+  saveDB()
   render()
 }
 
-// 🎨 RENDER SEGURO
 function render(){
-  var list = document.getElementById('list')
-  var search = document.getElementById('search').value.toLowerCase()
+  const list = document.getElementById('list')
+  list.innerHTML = ''
 
-  while(list.firstChild){
-    list.removeChild(list.firstChild)
-  }
-
-  var total = 0
-
-  for(var i=0; i<data.length; i++){
-    var p = data[i]
-
-    var name = (p.name || '').toLowerCase()
-    if(name.indexOf(search) === -1){
-      continue
-    }
-
-    var price = Number(p.price) || 0
-    var qty = Number(p.qty) || 0
-
-    total += price * qty
-
-    var card = document.createElement('div')
-    card.className = 'card'
-
-    var flex = document.createElement('div')
-    flex.className = 'flex'
-
-    var info = document.createElement('div')
-
-    var title = document.createElement('b')
-    title.textContent = p.name || 'Sem nome'
-
-    var cat = document.createElement('div')
-    cat.className = 'small'
-    cat.textContent = p.category || 'Geral'
-
-    var priceText = document.createElement('div')
-    priceText.textContent = 'R$ ' + price.toFixed(2) + ' | Qtd: ' + qty
-
-    info.appendChild(title)
-    info.appendChild(document.createElement('br'))
-    info.appendChild(cat)
-    info.appendChild(priceText)
-
-    var btn = document.createElement('button')
-    btn.textContent = 'X'
-    btn.onclick = (function(index){
-      return function(){
-        removeItem(index)
-      }
-    })(i)
-
-    flex.appendChild(info)
-    flex.appendChild(btn)
-    card.appendChild(flex)
-    list.appendChild(card)
-  }
-
-  document.getElementById('total').textContent =
-    'Total estoque: R$ ' + total.toFixed(2)
-}
-
-// 📤 EXPORTAR
-function exportData(){
-  var blob = new Blob([JSON.stringify(data)], {type:'application/json'})
-  var a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = 'backup.json'
-  a.click()
-}
-
-// 🎯 EVENTOS
-document.getElementById('btnAdd').onclick = add
-document.getElementById('btnExport').onclick = exportData
-
-// 🚀 INIT
-loadData()
-normalize()
-save()
-render()
-
-</script>
-
-</body>
-</html>
+  const
