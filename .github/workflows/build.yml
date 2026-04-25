@@ -13,7 +13,7 @@ jobs:
       # 📥 Clonar repo
       - uses: actions/checkout@v4
 
-      # 🟢 Node (estável)
+      # 🟢 Node
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -27,12 +27,11 @@ jobs:
       # 📦 Dependências
       - run: npm install || true
 
-      # 🌐 Garantir www
-      - run: |
+      # 🌐 Copiar seu app
+      - name: Copy app
+        run: |
           mkdir -p www
-          if [ ! -f www/index.html ]; then
-            echo "<!doctype html><html><body><h1>App OK</h1></body></html>" > www/index.html
-          fi
+          cp index.html www/index.html
 
       # ⚙️ Capacitor
       - run: npm install @capacitor/core @capacitor/cli @capacitor/android
