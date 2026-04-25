@@ -90,63 +90,56 @@ button{
   <option value="Limpeza">Limpeza</option>
 </select>
 
-<button onclick="add()">Salvar</button>
+<button id="btnAdd">Salvar</button>
 
-<input id="search" placeholder="🔍 Buscar..." oninput="render()">
+<input id="search" placeholder="🔍 Buscar...">
 
 <div id="list"></div>
-
 <div class="total" id="total"></div>
 
-<button onclick="exportData()">📤 Exportar Backup</button>
+<button id="btnExport">📤 Exportar Backup</button>
 
 </div>
 
 <script>
 // 🔐 CARREGAMENTO SEGURO
-let data = []
-
+var data = []
 try {
-  const stored = localStorage.getItem('produtos')
+  var stored = localStorage.getItem('produtos')
   data = stored ? JSON.parse(stored) : []
 } catch (e) {
-  console.warn('Erro ao ler localStorage, resetando...')
   data = []
 }
 
-// 🔄 MIGRAR DADOS ANTIGOS
-data = data.map(p => ({
-  name: p?.name || p?.n || '',
-  price: Number(p?.price ?? p?.p ?? 0),
-  qty: Number(p?.qty ?? 0),
-  category: p?.category || 'Geral'
-}))
+// 🔄 NORMALIZAR DADOS
+data = data.map(function(p){
+  return {
+    name: (p && (p.name || p.n)) || '',
+    price: Number((p && (p.price ?? p.p)) || 0),
+    qty: Number((p && p.qty) || 0),
+    category: (p && p.category) || 'Geral'
+  }
+})
 
 save()
 
-// 💾 SALVAR
 function save(){
   localStorage.setItem('produtos', JSON.stringify(data))
 }
 
 // ➕ ADICIONAR
-function add(){
-  const nameEl = document.getElementById('name')
-  const priceEl = document.getElementById('price')
-  const qtyEl = document.getElementById('qty')
-  const categoryEl = document.getElementById('category')
-
-  const name = nameEl.value.trim()
-  const price = parseFloat(priceEl.value) || 0
-  const qty = parseInt(qtyEl.value) || 0
-  const category = categoryEl.value
+document.getElementById('btnAdd').onclick = function(){
+  var name = document.getElementById('name').value.trim()
+  var price = parseFloat(document.getElementById('price').value) || 0
+  var qty = parseInt(document.getElementById('qty').value) || 0
+  var category = document.getElementById('category').value
 
   if(!name){
     alert('Nome obrigatório')
     return
   }
 
-  data.push({ name, price, qty, category })
+  data.push({name:name, price:price, qty:qty, category:category})
   save()
   clearInputs()
   render()
@@ -154,70 +147,89 @@ function add(){
 
 // 🧹 LIMPAR
 function clearInputs(){
-  ['name','price','qty'].forEach(id=>{
-    document.getElementById(id).value = ''
-  })
+  document.getElementById('name').value=''
+  document.getElementById('price').value=''
+  document.getElementById('qty').value=''
 }
 
 // ❌ REMOVER
-function remove(i){
+function removeItem(index){
   if(confirm('Excluir produto?')){
-    data.splice(i,1)
+    data.splice(index,1)
     save()
     render()
   }
 }
 
-// 🎨 RENDER PROFISSIONAL (SEM innerHTML +=)
+// 🔍 BUSCA
+document.getElementById('search').oninput = render
+
+// 🎨 RENDER SEGURO (SEM innerHTML)
 function render(){
-  const list = document.getElementById('list')
-  const searchEl = document.getElementById('search')
-  const search = (searchEl.value || '').toLowerCase()
+  var list = document.getElementById('list')
+  var search = (document.getElementById('search').value || '').toLowerCase()
 
-  list.innerHTML = ''
-  let total = 0
+  // limpar lista
+  while(list.firstChild){
+    list.removeChild(list.firstChild)
+  }
 
-  data
-    .filter(p => (p.name || '').toLowerCase().includes(search))
-    .forEach((p,i)=>{
-      const price = Number(p.price) || 0
-      const qty = Number(p.qty) || 0
+  var total = 0
 
-      total += price * qty
+  data.forEach(function(p,i){
+    var name = (p.name || '').toLowerCase()
+    if(name.indexOf(search) === -1) return
 
-      const card = document.createElement('div')
-      card.className = 'card'
+    var price = Number(p.price) || 0
+    var qty = Number(p.qty) || 0
 
-      const flex = document.createElement('div')
-      flex.className = 'flex'
+    total += price * qty
 
-      const info = document.createElement('div')
-      info.innerHTML = `
-        <b>${p.name || 'Sem nome'}</b><br>
-        <span class="small">${p.category || 'Geral'}</span><br>
-        R$ ${price.toFixed(2)} | Qtd: ${qty}
-      `
+    var card = document.createElement('div')
+    card.className = 'card'
 
-      const btn = document.createElement('button')
-      btn.textContent = 'X'
-      btn.onclick = () => remove(i)
+    var flex = document.createElement('div')
+    flex.className = 'flex'
 
-      flex.appendChild(info)
-      flex.appendChild(btn)
-      card.appendChild(flex)
-      list.appendChild(card)
-    })
+    var info = document.createElement('div')
 
-  document.getElementById('total').innerText =
-    "Total estoque: R$ " + total.toFixed(2)
+    var title = document.createElement('b')
+    title.textContent = p.name || 'Sem nome'
+
+    var cat = document.createElement('div')
+    cat.className = 'small'
+    cat.textContent = p.category || 'Geral'
+
+    var priceText = document.createElement('div')
+    priceText.textContent = 'R$ ' + price.toFixed(2) + ' | Qtd: ' + qty
+
+    info.appendChild(title)
+    info.appendChild(document.createElement('br'))
+    info.appendChild(cat)
+    info.appendChild(priceText)
+
+    var btn = document.createElement('button')
+    btn.textContent = 'X'
+    btn.onclick = function(){
+      removeItem(i)
+    }
+
+    flex.appendChild(info)
+    flex.appendChild(btn)
+    card.appendChild(flex)
+    list.appendChild(card)
+  })
+
+  document.getElementById('total').textContent =
+    'Total estoque: R$ ' + total.toFixed(2)
 }
 
 // 📤 EXPORTAR
-function exportData(){
-  const blob = new Blob([JSON.stringify(data)], {type:"application/json"})
-  const a = document.createElement('a')
+document.getElementById('btnExport').onclick = function(){
+  var blob = new Blob([JSON.stringify(data)], {type:'application/json'})
+  var a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
-  a.download = "backup.json"
+  a.download = 'backup.json'
   a.click()
 }
 
