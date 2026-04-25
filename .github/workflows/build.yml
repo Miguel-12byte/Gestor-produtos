@@ -141,4 +141,51 @@ function render(){
   const list = document.getElementById('list')
   list.innerHTML = ''
 
-  const
+  const searchVal = search.value.toLowerCase()
+
+  let totals = {}
+
+  products.forEach((p,i)=>{
+    if(!p.name.toLowerCase().includes(searchVal)) return
+
+    totals[p.category] = (totals[p.category]||0) + p.price*p.qty
+
+    const div = document.createElement('div')
+    div.className='card'
+    div.innerHTML = `
+      <b>${p.name}</b><br>
+      <span class='small'>${p.category}</span><br>
+      R$ ${p.price} | Qtd: ${p.qty}
+      <div class='flex'>
+        <button onclick="editItem(${i})">Editar</button>
+        <button onclick="removeItem(${i})">X</button>
+      </div>
+    `
+    list.appendChild(div)
+  })
+
+  renderChart(totals)
+}
+
+let chart
+function renderChart(data){
+  const ctx = document.getElementById('chart')
+
+  if(chart) chart.destroy()
+
+  chart = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:Object.keys(data),
+      datasets:[{
+        label:'Valor em estoque',
+        data:Object.values(data)
+      }]
+    }
+  })
+}
+
+search.oninput = render
+
+</script></body>
+</html>
