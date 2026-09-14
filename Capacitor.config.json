@@ -1,13 +1,1 @@
-{
-  "appId": "com.miguel.gestorprodutos",
-  "appName": "Gestor de Produtos",
-  "webDir": "www",
-  "server": {
-    "androidScheme": "https"
-  },
-  "plugins": {
-    "SplashScreen": {
-      "launchShowDuration": 0
-    }
-  }
-}
+
