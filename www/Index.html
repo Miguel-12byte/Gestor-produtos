@@ -1,76 +1,274 @@
-<script>
-let produtos = JSON.parse(localStorage.getItem('produtos')||'[]')
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="manifest" href="/manifest.json">
+  <title>Gestor de Produtos</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-function add(){
-  let n = name.value.trim()
-  let p = parseFloat(price.value)
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+    }
 
-  if(!n) return alert('Digite o nome')
-  if(isNaN(p)) p = 0
+    header {
+      padding: 15px;
+      background: #2563eb;
+      font-weight: bold;
+      text-align: center;
+      font-size: 20px;
+    }
 
-  produtos.push({n,p})
-  localStorage.setItem('produtos',JSON.stringify(produtos))
+    .container {
+      padding: 15px;
+      max-width: 600px;
+      margin: auto;
+    }
 
-  name.value=''
-  price.value=''
+    h3 {
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
 
-  render()
-}
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+    }
 
-function del(i){
-  produtos.splice(i,1)
-  localStorage.setItem('produtos',JSON.stringify(produtos))
-  render()
-}
+    input {
+      background: #111827;
+      color: #fff;
+    }
 
-function render(){
-  list.innerHTML=''
-  produtos.forEach((x,i)=>{
-    list.innerHTML += `
-      <div class="card">
-        ${x.n} - R$ ${x.p.toFixed(2)}
-        <button onclick="del(${i})">Excluir</button>
-      </div>`
-  })
-}
+    input:focus {
+      outline: 2px solid #2563eb;
+    }
 
-render()
-</script><body>
+    button {
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.2s;
+      font-weight: bold;
+    }
 
-<header>Gestor de Produtos</header>
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
 
-<div class="container">
+    .card {
+      background: #111827;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid #2563eb;
+    }
 
-<input id="name" placeholder="Produto">
-<input id="price" type="number" placeholder="Preço">
+    .card-info {
+      flex: 1;
+    }
 
-<button onclick="add()">Salvar</button>
+    .card-info b {
+      display: block;
+      margin-bottom: 4px;
+    }
 
-<div id="list"></div>
+    .actions {
+      display: flex;
+      gap: 5px;
+    }
 
-</div>
+    .actions button {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 12px;
+      margin: 0;
+    }
 
-<script>
-let produtos = JSON.parse(localStorage.getItem('produtos')||'[]')
+    .delete {
+      background: #dc2626;
+    }
 
-function add(){
-  let n = name.value
-  let p = price.value
-  if(!n) return alert('Digite o nome')
-  produtos.push({n,p})
-  localStorage.setItem('produtos',JSON.stringify(produtos))
-  render()
-}
+    .delete:hover {
+      background: #b91c1c;
+    }
 
-function render(){
-  list.innerHTML=''
-  produtos.forEach(x=>{
-    list.innerHTML += `<div class="card">${x.n} - R$ ${x.p||0}</div>`
-  })
-}
+    .edit {
+      background: #10b981;
+    }
 
-render()
-</script>
+    .edit:hover {
+      background: #059669;
+    }
 
+    .total {
+      margin-top: 20px;
+      padding: 15px;
+      background: #111827;
+      font-weight: bold;
+      text-align: right;
+      font-size: 16px;
+      border-radius: 8px;
+      color: #10b981;
+    }
+
+    .empty {
+      text-align: center;
+      color: #6b7280;
+      margin-top: 20px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>📦 Gestor de Produtos</header>
+
+  <div class="container">
+    <h3>Cadastrar Produto</h3>
+    <input id="name" placeholder="Nome do produto" autocomplete="off">
+    <input id="price" type="number" step="0.01" placeholder="Preço" autocomplete="off">
+    <button id="btnAdd">💾 Salvar</button>
+
+    <h3>Lista de Produtos</h3>
+    <div id="list"></div>
+
+    <div class="total" id="total">Total: R$ 0,00</div>
+  </div>
+
+  <script>
+    const nameInput = document.getElementById('name');
+    const priceInput = document.getElementById('price');
+    const list = document.getElementById('list');
+    const totalEl = document.getElementById('total');
+    const btnAdd = document.getElementById('btnAdd');
+
+    let products = JSON.parse(localStorage.getItem('produtos') || '[]');
+
+    // 🔄 Salvar no localStorage
+    function save() {
+      localStorage.setItem('produtos', JSON.stringify(products));
+    }
+
+    // ➕ Adicionar produto
+    function addProduct() {
+      const name = nameInput.value.trim();
+      let price = parseFloat(priceInput.value);
+
+      if (!name) {
+        alert('❌ Digite o nome do produto');
+        nameInput.focus();
+        return;
+      }
+
+      if (isNaN(price) || price < 0) {
+        price = 0;
+      }
+
+      products.push({ name, price });
+      save();
+      clearInputs();
+      render();
+    }
+
+    // ✏️ Editar produto
+    function editProduct(index) {
+      const p = products[index];
+      const newName = prompt('Editar nome:', p.name);
+      if (!newName) return;
+
+      let newPrice = parseFloat(prompt('Editar preço:', p.price));
+      if (isNaN(newPrice)) newPrice = 0;
+
+      products[index] = {
+        name: newName.trim(),
+        price: newPrice
+      };
+
+      save();
+      render();
+    }
+
+    // ❌ Remover produto
+    function removeProduct(index) {
+      if (confirm('Deseja remover este produto?')) {
+        products.splice(index, 1);
+        save();
+        render();
+      }
+    }
+
+    // 🧹 Limpar inputs
+    function clearInputs() {
+      nameInput.value = '';
+      priceInput.value = '';
+      nameInput.focus();
+    }
+
+    // 🎨 Renderizar lista
+    function render() {
+      list.innerHTML = '';
+      let total = 0;
+
+      if (products.length === 0) {
+        list.innerHTML = '<div class="empty">Nenhum produto cadastrado</div>';
+        totalEl.innerText = 'Total: R$ 0,00';
+        return;
+      }
+
+      products.forEach((p, i) => {
+        total += p.price;
+        const item = document.createElement('div');
+        item.className = 'card';
+        item.innerHTML = `
+          <div class="card-info">
+            <b>${p.name}</b>
+            <span>R$ ${p.price.toFixed(2)}</span>
+          </div>
+          <div class="actions">
+            <button class="edit" onclick="editProduct(${i})">✏️ Editar</button>
+            <button class="delete" onclick="removeProduct(${i})">🗑️ Excluir</button>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+
+      totalEl.innerText = 'Total: R$ ' + total.toFixed(2);
+    }
+
+    // 🎯 Eventos
+    btnAdd.addEventListener('click', addProduct);
+    nameInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter') addProduct();
+    });
+    priceInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter') addProduct();
+    });
+
+    render();
+
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/Sw.js')
+        .then(reg => console.log('✅ Service Worker registrado'))
+        .catch(err => console.log('Service Worker error:', err));
+    }
+  </script>
 </body>
 </html>

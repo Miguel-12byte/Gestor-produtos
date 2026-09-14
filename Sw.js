@@ -1,23 +1,24 @@
-const CACHE_NAME = "gestor-v1";
+const CACHE_NAME = 'gestor-v1';
 const ASSETS = [
-  "/",
-  "/index.html",
-  "/style.css",
-  "/js/app.js"
+  '/',
+  '/www/Index.html',
+  '/manifest.json'
 ];
 
 // 🔹 INSTALAÇÃO (cache inicial)
-self.addEventListener("install", event => {
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS);
+      return cache.addAll(ASSETS).catch(err => {
+        console.log('Cache addAll error:', err);
+      });
     })
   );
   self.skipWaiting();
 });
 
 // 🔹 ATIVAÇÃO (limpa cache antigo)
-self.addEventListener("activate", event => {
+self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
@@ -32,24 +33,36 @@ self.addEventListener("activate", event => {
   self.clients.claim();
 });
 
-// 🔹 FETCH (estratégia: cache first + fallback)
-self.addEventListener("fetch", event => {
+// 🔹 FETCH (estratégia: network first + fallback cache)
+self.addEventListener('fetch', event => {
+  // Ignora requisições não-GET
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return (
-        response ||
-        fetch(event.request).then(networkResponse => {
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
+    fetch(event.request)
+      .then(response => {
+        // Se sucesso, armazena em cache
+        if (response && response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
           });
-        }).catch(() => {
-          // fallback offline simples
-          if (event.request.mode === "navigate") {
-            return caches.match("/index.html");
+        }
+        return response;
+      })
+      .catch(() => {
+        // Offline: retorna do cache
+        return caches.match(event.request).then(response => {
+          if (response) {
+            return response;
           }
-        })
-      );
-    })
+          // Fallback para página HTML
+          if (event.request.mode === 'navigate') {
+            return caches.match('/www/Index.html');
+          }
+        });
+      })
   );
 });
